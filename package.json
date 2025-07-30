@@ -1,0 +1,7 @@
+{
+  "name": "dbl-limo-stripe-backend",
+  "version": "1.0.0",
+  "dependencies": {
+    "stripe": "^14.0.0"
+  }
+}
