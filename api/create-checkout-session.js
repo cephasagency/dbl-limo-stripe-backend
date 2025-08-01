@@ -1,10 +1,10 @@
 import Stripe from 'stripe';
 
-// Initialize Stripe with your Secret Key
+// Use your real Stripe Secret Key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  // Allow CORS if needed
+  // Allow CORS so Wix can call this API
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     try {
       const { amount, bookingDetails } = req.body;
 
-      // ✅ Create a Payment Intent instead of Checkout Session
+      // Create Payment Intent (Payment Element requires this)
       const paymentIntent = await stripe.paymentIntents.create({
         amount,
         currency: 'usd',
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
         automatic_payment_methods: { enabled: true }
       });
 
-      // Return client secret to frontend
+      // Return clientSecret to frontend
       res.status(200).json({ clientSecret: paymentIntent.client_secret });
     } catch (err) {
       console.error("Stripe Payment Intent Error:", err);
