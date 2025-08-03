@@ -1,43 +1,34 @@
+// pages/api/create-checkout-session.js
 import Stripe from 'stripe';
 
-// Initialize Stripe with your Secret Key from environment variables
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  // Allow CORS for Wix
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  // Handle preflight
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     try {
       const { amount, bookingDetails } = req.body;
 
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ error: "Invalid amount" });
+      // Make sure amount is valid
+      if (!amount || amount < 50) {
+        return res.status(400).json({ error: 'Invalid payment amount.' });
       }
 
-      // Create a Payment Intent
+      // Create PaymentIntent for inline payments
       const paymentIntent = await stripe.paymentIntents.create({
-        amount, // amount in cents
+        amount,
         currency: 'usd',
-        description: `Chauffeur Booking - ${bookingDetails.pickup} to ${bookingDetails.dropoff}`,
-        automatic_payment_methods: { enabled: true }
+        automatic_payment_methods: { enabled: true },
+        metadata: bookingDetails || {}
       });
 
-      // Return clientSecret
       return res.status(200).json({ clientSecret: paymentIntent.client_secret });
 
     } catch (err) {
-      console.error("Stripe Payment Intent Error:", err);
+      console.error('Stripe PaymentIntent error:', err);
       return res.status(500).json({ error: err.message });
     }
   } else {
-    return res.status(405).json({ error: "Method not allowed" });
+    res.setHeader('Allow', 'POST');
+    return res.status(405).end('Method Not Allowed');
   }
 }
